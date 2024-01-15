@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+
+
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">AVIS</a>
+        </div>
+
+        <ul class="nav navbar-nav navbar-right">
+            {% if user_name %}
+                <li><a href="#"> Merhaba, {{ user_name }} </a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}"> Üye Girişi <span class="glyphicon glyphicon-log-in"></span></a></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="black-panel">
+</div>
+<div class="grey-panel">
+    <span class="vertical-line"></span>
+    <span class="text-next-to-line">Teslim</span>
+    <br>
+    <span class="text-next-to-line2">Alma</span>
+    <br> 
+    <span class="text-next-to-line3">Ofisi</span>
+    <div class="text-box">
+       <select id="officeDropdown">
+            <option value="" disabled selected>Alış Ofisi Seçiniz</option>
+        </select>
+    </div>
+    <span class="vertical-line2"></span>
+    <span class="text-next-to-line4">Alış</span>
+    <br>
+    <span class="text-next-to-line5">Tarihi</span>
+
+    <input class="date-input" type="date" id="start" name="trip-start" value="2024-01-01" min="2024-01-01"/>
+    <input class="date-input" type="time" id="appt" name="appt" min="09:00" max="18:00" required />
+
+    <span class="vertical-line3"></span>
+    <span class="text-next-to-line6">İade</span>
+    <br>
+    <span class="text-next-to-line7">Ofisi</span>
+    <div class="text-box2">
+        <select id="officeDropdown2">
+            <option value="" disabled selected>İade Ofisi</option>
+        </select>
+    </div>
+
+    <span class="vertical-line4"></span>
+    <span class="text-next-to-line8">İade</span>
+    <br>
+    <span class="text-next-to-line8">Tarihi</span>
+    
+    <input class="date-input2" type="date" id="end" name="trip-start" value="2024-01-01" min="2024-01-01"/>
+    <input class="date-input2" type="time" id="appt2" name="appt2" min="09:00" max="18:00" required />
+
+    <button class="button" id="Button" class="btn btn-default">KİRALA
+    <i class="fas fa fa-angle-right button-icon"></i>
+    </button>
+    
+    <div class="office-panel">
+        <span class="office-text">Avis Ofisi</span>
+        <div class="map-container">
+            <div id="map" style="width: 700px; height: 450px;"></div>
+        </div>
+    </div>
+
+    <input type="hidden" id="daysDifference" name="daysDifference" value="1">
+</div>
+   
+    
+   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7SKCVxVNQ4-AAgVNiF8UmgY41SDszMw8&callback=initMap"></script>
+ 
+
+   <script>
+    function initMap() {
+        
+
+        var userCity = "{{ user_city }}";  
+        var mapCenter;
+
+        
+        var cityCoordinates = {
+            'izmir': { lat: 38.42863235819044, lng: 27.145377181409053 },
+            'istanbul': { lat: 41.077827160466434, lng: 29.04404805277145},
+            'ankara': { lat: 39.902214065467994, lng: 32.860186923856084 },
+            
+        };
+
+        if ("{{ user_name }}" && userCity && cityCoordinates[userCity]) {
+          
+            mapCenter = cityCoordinates[userCity];
+            initializeMap(mapCenter);
+        } else if (navigator.geolocation) {
+           
+            showPermissionDialog();
+        } else {
+            console.error('Geolocation is not supported by this browser.');
+            
+            initializeMap({ lat: 38.429975, lng: 27.143914 });
+        }
+    }
+
+    function showPermissionDialog() {
+    
+        var permissionDialog = confirm("Do you want to share your location?");
+        if (permissionDialog == true) {
+           
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var mapCenter = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    initializeMap(mapCenter);
+                },
+                function(error) {
+                    console.error('Error getting user location:', error);
+                    
+                    initializeMap({ lat: 38.429975, lng: 27.143914 }); 
+                },
+                { enableHighAccuracy: true, maximumAge: 30000, timeout: 27000 }
+            );
+        } else {
+            
+            initializeMap({ lat: 38.429975, lng: 27.143914 });
+        }
+    }
+
+    function initializeMap(center) {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: center,
+            zoom: 12,
+            mapTypeId: 'roadmap'
+        });
+
+       
+        fetch('/get_office_locations')
+            .then(response => response.json())
+            .then(offices => {
+                
+                offices.forEach(function (office) {
+                    var marker = new google.maps.Marker({
+                        position: { lat: office.latitude, lng: office.longitude },
+                        map: map,
+                        title: office.name,
+                        
+                        
+                    });
+                    
+                    var dropdown = document.getElementById('officeDropdown');
+                    var option = document.createElement('option');
+                    option.value = office.name;
+                    option.text = office.name;
+                    dropdown.appendChild(option);
+
+            
+                    var dropdown2 = document.getElementById('officeDropdown2');
+                    var option2 = document.createElement('option');
+                    option2.value = office.name;
+                    option2.text = office.name;
+                    dropdown2.appendChild(option2);
+                   
+                    marker.addListener('click', function() {
+                       
+                        displayOfficeInfo(office);
+                    });
+                });
+                
+            })
+            .catch(error => console.error('Error fetching office locations:', error));
+    }
+    function displayOfficeInfo(office) {
+    console.log('Office Object:', office);
+    var officePanel = document.querySelector('.office-panel');
+
+    
+    var existingOfficeInfo = officePanel.querySelector('.office-info-container');
+    if (existingOfficeInfo) {
+        existingOfficeInfo.remove();
+    }
+
+   
+    var officeInfoDiv = document.createElement('div');
+    officeInfoDiv.classList.add('office-info-container');
+    
+    officeInfoDiv.innerHTML = `
+        <div class="office-header">
+            <i class="fas fa-map-marker-alt marker-icon"></i>
+            <span class="office-text2">${office.name}</span>
+            <i class="fas fa fa-building building-icon"></i>
+        </div>
+        <div class="office-info">
+            <p>${office.address}</p>
+            <p>Phone ${office.phone_number}</p>
+            <p>${office.work_days}</p>
+            <p>${office.work_hours}</p>
+            <!-- Add more details as needed -->
+        </div>
+    `;
+
+    
+    officePanel.appendChild(officeInfoDiv);
+}
+
+function updateButtonText() {
+        var startDate = document.getElementById('start').value;
+        var endDate = document.getElementById('end').value;
+
+     
+        var startDateObj = new Date(startDate);
+        var endDateObj = new Date(endDate);
+
+       
+        if (!isNaN(startDateObj.getTime()) && !isNaN(endDateObj.getTime())) {
+            
+            var timeDifference = Math.abs(endDateObj - startDateObj);
+            var daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+            document.getElementById('daysDifference').value = daysDifference;
+
+            var buttonText = daysDifference + " GÜN KİRALA";
+            var buttonIcon = '<i class="fas fa fa-angle-right button-icon2"></i>'; 
+            var buttonHTML = "<span class='button-text'>" + buttonText +buttonIcon + "</span>";
+
+document.getElementById('Button').innerHTML = buttonHTML;
+        
+        } else {
+            
+            document.getElementById('Button').innerText = "Invalid Dates";
+        }
+    }
+
+    
+    document.getElementById('start').addEventListener('change', updateButtonText);
+    document.getElementById('end').addEventListener('change', updateButtonText);
+
+    document.getElementById('Button').addEventListener('click', function() {
+        var selectedOffice = document.getElementById('officeDropdown').value;
+        var datestart =  document.getElementById('start').value;
+        var dateend =  document.getElementById('end').value;
+        var hourstart =  document.getElementById('appt').value;
+        var hoursend =  document.getElementById('appt2').value;
+
+        if (selectedOffice) {
+            var daysDifference = document.getElementById('daysDifference').value;
+            window.location.href = '/cars_for_office/' + selectedOffice + '?daysDifference=' + daysDifference + '&startdate=' + datestart + '&enddate=' + dateend +'&appthour=' + hourstart + '&appt2hour=' + hoursend;
+        } else {
+            alert('Please select a picking office.');
+        }
+    });
+
+    
+   
+</script>
+
+
+
+</body>
+
+</html>
+
+  

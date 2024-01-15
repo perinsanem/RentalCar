@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>]ye Girişi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+</head>
+<body>
+    <form class="register-form" method="POST">
+        {{ form.hidden_tag() }}
+        <h1>Üye Girişi</h1>
+        <label for="{{ form.email.id }}">Email:</label>
+        {{ form.email() }}
+        <label for="{{ form.password.id }}">Şifre:</label>
+        {{ form.password() }}
+        {{ form.submit(value="Giriş Yap") }}
+        <p>Hesabın yok mu? <a href="{{ url_for('register') }}">Kayıt Ol</a></p>
+    </form>
+</body>
+</html>

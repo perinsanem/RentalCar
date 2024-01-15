@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+</head>
+
+<body>
+
+    <div class="top-panel">
+        <div class="navbar-info">
+        <span>{{date_start}} - </span>
+        <span>{{hour_start}}</span>
+        <span> > </span>
+        <span>{{date_end}}- </span>
+        <span>{{hour_end}}</span>
+        </div>
+        <span class="office-name">{{office.name}}</span>
+        <form id="carFilterForm">
+            <div class="text-box3">
+                <label for="showAllDropdown">Araç Tipi:</label>
+                <select id="showAllDropdown" name="showAllDropdown">
+                    <option value="all">Tüm Araçlar</option>
+                    {% for car in cars %}
+                        <option value="{{ car.name }}">{{ car.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <div class="text-box3">
+                <label for="transmissionDropdown">Şanzman Tipi:</label>
+                <select id="transmissionDropdown" name="transmissionDropdown">
+                    <option value="all">Tüm</option>
+                    <option value="manual">Manual</option>
+                    <option value="automatic">Automatic</option>
+                </select>
+            </div>
+    
+            <div class="text-box3">
+                <label for="orderByPriceDropdown">Sırala:</label>
+                <select id="orderByPriceDropdown" name="orderByPriceDropdown">
+                    <option value="all">Hepsi</option>
+                    <option value="mostToLeast">En Yüksek Fiyat</option>
+                    <option value="leastToMost">En Düşük Fiyat</option>
+                </select>
+            </div>
+    
+            <button type="button" class="button3" id="Button3" class="btn btn-default" onclick="applyFilter()">Uygula</button>
+        </form>
+</div>
+
+<h3></h3>
+<div id="info-container"></div>
+{% for car in cars %}
+    <div class="car-container">
+        
+    <span class="car-text">EKONOMİK</span>
+    <span class="car-text2">Tüm</span>
+    <br>
+    <span class="car-text3">Özellikler/Kiralama</span>
+    <br> 
+    <span class="car-text4">Şartları</span>
+
+
+        <div class="car-name">{{ car.name }}</div>
+        <p>Dizel/Benzin</p>
+        <p class="car-transmission">{{ car.transmission }}</p>
+        <p class="car-deposit">{{ car.deposit }}TL Depozito</p>
+        <p>{{ car.mileage }} Km</p>
+        <p>{{ car.age }} Yaş</p>
+        <img src="{{ url_for('static', filename=car.image_path) }}" class="car-image" alt="{{ car.name }} Image">
+        <p class="final-cost">{{ car.cost  *  days_difference}} TL</p>
+        <p class="real-cost">{{ car.cost }} / Günlük</p>
+
+        <button class="button2" id="Button2" class="btn btn-default">Hemen Öde
+            <i class="fas fa fa-angle-right button-icon"></i>
+            </button>
+    </div>
+{% endfor %}
+
+<script>
+   function orderByPrice() {
+            var selectedOrderByPrice = document.getElementById('orderByPriceDropdown').value;
+            var carContainers = document.getElementsByClassName('car-container');
+            var carArray = Array.from(carContainers);
+
+            carArray.sort(function (a, b) {
+                var priceA = parseFloat(a.querySelector('.real-cost').textContent);
+                var priceB = parseFloat(b.querySelector('.real-cost').textContent);
+                
+
+                if (selectedOrderByPrice === 'mostToLeast') {
+                    return priceB - priceA; 
+              } else  {
+                return priceA - priceB; 
+            } 
+                
+            });
+
+            var infoContainer = document.getElementById('info-container');
+            infoContainer.innerHTML = "";
+
+            carArray.forEach(function (car) {
+                infoContainer.appendChild(car);
+            });
+        }
+
+    function showAllCars(selectedCar) {
+        var carContainers = document.getElementsByClassName('car-container');
+
+        for (var i = 0; i < carContainers.length; i++) {
+            var carContainer = carContainers[i];
+            var carName = carContainer.querySelector('.car-name').textContent;
+
+            if (selectedCar === 'all' || selectedCar === carName) {
+                carContainer.style.display = 'inline-block';
+            } else {
+                carContainer.style.display = 'none';
+            }
+        }
+    }
+
+    function applyFilter() {
+        var selectedCar = document.getElementById('showAllDropdown').value;
+        var selectedTransmission = document.getElementById('transmissionDropdown').value;
+        var selectedOrderByPrice = document.getElementById('orderByPriceDropdown').value;
+
+        var carContainers = document.getElementsByClassName('car-container');
+
+        for (var i = 0; i < carContainers.length; i++) {
+            var carContainer = carContainers[i];
+            var carName = carContainer.querySelector('.car-name').textContent;
+            var carTransmission = carContainer.querySelector('.car-transmission').textContent.toLowerCase();
+            var carCost = parseFloat(carContainer.querySelector('.final-cost').textContent);
+
+            var showCar = (selectedCar === 'all' || selectedCar === carName);
+            var showTransmission = (selectedTransmission === 'all' || selectedTransmission === carTransmission);
+            var showOrderByPrice = (selectedOrderByPrice === 'all' || (selectedOrderByPrice === 'mostToLeast' && carCost > 0) || (selectedOrderByPrice === 'leastToMost' && carCost > 0));
+
+            if (showCar && showTransmission && showOrderByPrice) {
+                carContainer.style.display = 'inline-block';
+            } else {
+                carContainer.style.display = 'none';
+            }
+        }
+        orderByPrice();
+    }
+
+    function chooseByTransmission() {
+        var selectedTransmission = document.getElementById('transmissionDropdown').value;
+        var carContainers = document.getElementsByClassName('car-container');
+
+        for (var i = 0; i < carContainers.length; i++) {
+            var carContainer = carContainers[i];
+            var carTransmission = carContainer.querySelector('.car-transmission').textContent.toLowerCase();
+
+            if (selectedTransmission === 'all' || selectedTransmission === carTransmission) {
+                carContainer.style.display = 'inline-block';
+            } else {
+                carContainer.style.display = 'none';
+            }
+        }
+    }
+</script>
+
+</body>
+
+</html>

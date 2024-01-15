@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayit Ol</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+</head>
+<body>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <h1>Kayıt Ol</h1>
+        <label for="{{ form.name.id }}">İsim:</label>
+        {{ form.name() }}
+        <label for="{{ form.surname.id }}">Soy İsim:</label>
+        {{ form.surname() }}
+        <label for="{{ form.email.id }}">Email:</label>
+        {{ form.email() }}
+        <label for="{{ form.password.id }}">Şifre:</label>
+        {{ form.password() }}
+        <label for="{{ form.confirm_password.id }}">Şifre Onayı:</label>
+        {{ form.confirm_password() }}
+        <label for="{{ form.country.id }}">Ülke:</label>
+        {{ form.country() }}
+        <label for="{{ form.city.id }}">İl:</label>
+        {{ form.city() }}
+        {{ form.submit(value="Kayıt Ol") }}
+    </form>
+</body>
+</html>
